@@ -1,6 +1,8 @@
 import Chapter from '../models/chapterModel.js';
 import Topic from '../models/topicModel.js';
 import Question from '../models/questionModel.js';
+import Student from '../models/studentModel.js';
+import Class from '../models/classModel.js';
 
 // @desc    Get chapter details and its topics
 // @route   GET /api/student/chapters/:id
@@ -103,3 +105,15 @@ export const getQuestionsForTopic = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+export const getStudentClass = async (req, res) => {
+    try {
+        const classId = req.params.classId;
+        // Return the class details
+        const studentClass = await Class.findById(classId); 
+
+        res.status(200).json(studentClass);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+}

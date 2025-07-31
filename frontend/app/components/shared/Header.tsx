@@ -10,7 +10,7 @@ export default function Header() {
     <header className="bg-white shadow-sm">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold text-indigo-600">
-          BrightHeads
+          ShivArth
         </Link>
         <div className="flex items-center space-x-4">
           {currentUser ? (

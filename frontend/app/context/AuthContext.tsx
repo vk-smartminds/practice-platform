@@ -50,16 +50,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
         body: JSON.stringify({ email, password: pass }),
       });
+
       if (!response.ok) {
         return false;
       }
-      const userToStore = await response.json();
-      sessionStorage.setItem('currentUser', JSON.stringify(userToStore));
-      setCurrentUser(userToStore);
-      if (userToStore.role === 'admin') {
+
+      // Expect the backend to send back an object with both the user and the token
+      const user = await response.json();
+
+      if (!user) {
+        console.error("Login response missing user.");
+        return false;
+      }
+
+      // Store the user object AND the authentication token separately
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+      sessionStorage.setItem('authToken', user.token); // Store the token
+
+      setCurrentUser(user);
+
+      if (user.role === 'admin') {
         router.push('/admin/dashboard');
       } else {
-        router.push(userToStore.class ? '/student/dashboard' : '/student/class-selection');
+        router.push('/student/dashboard');
       }
       return true;
     } catch (error) {
@@ -69,7 +82,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const logout = () => {
+    // Clear both the user and the token on logout
     sessionStorage.removeItem('currentUser');
+    sessionStorage.removeItem('authToken'); // Remove the token
     setCurrentUser(null);
     router.push('/login');
   };

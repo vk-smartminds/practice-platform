@@ -61,11 +61,13 @@ export const loginUser = async (req, res) => {
     // Step 3: If user exists in either collection and password matches
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = generateToken(res, user._id, role);
+      
       res.status(200).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: role,
+        classId: user.classId || null, // Only for students
         token: token,
       });
     } else {
