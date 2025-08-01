@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password: pass }),
+        credentials: 'include', 
       });
 
       if (!response.ok) {
@@ -59,14 +60,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const user = await response.json();
 
       if (!user) {
-        console.error("Login response missing user.");
+        console.error("Login response missing user data.");
         return false;
       }
 
-      // Store the user object AND the authentication token separately
       sessionStorage.setItem('currentUser', JSON.stringify(user));
-      sessionStorage.setItem('authToken', user.token); // Store the token
-
       setCurrentUser(user);
 
       if (user.role === 'admin') {
@@ -94,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const updatedUser = { ...currentUser, class: selectedClass };
       setCurrentUser(updatedUser);
       sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      router.push('/student/dashboard');
     }
   };
 
