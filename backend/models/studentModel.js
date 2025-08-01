@@ -21,11 +21,6 @@ const studentSchema = new mongoose.Schema({
     ref: 'Class',
     required: true,
   },
-  subjectId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subject',
-    required: true,
-  },
 }, {
   timestamps: true,
 });

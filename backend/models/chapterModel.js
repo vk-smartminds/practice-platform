@@ -1,17 +1,12 @@
 import mongoose from 'mongoose';
 
 const chapterSchema = new mongoose.Schema({
-  title: {
+  chapterName: {
     type: String,
     required: true,
   },
   chapterNumber: {
     type: Number,
-    required: true,
-  },
-  classId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Class',
     required: true,
   },
   subjectId: {
