@@ -11,51 +11,37 @@ export default function StudentDashboard() {
   const router = useRouter();
 
   // This function needs to send the token
-async function fetchUserClass() {
-  // Check if the user exists but the class name hasn't been fetched yet
-  if (currentUser && !currentUser.class) {
-    try {
-      // 1. Get the token from sessionStorage
-      const token = sessionStorage.getItem('authToken');
+  async function fetchUserClass() {
+    if (currentUser && currentUser.classId) {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/student/class/${currentUser.classId}`,
+          {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // Crucial for sending the auth cookie
+          }
+        );
 
-      // If there's no token, we can't proceed.
-      if (!token) {
-        console.error("Auth token not found in session storage.");
-        // Optional: redirect to login
-        // router.push('/login'); 
-        return;
-      }
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
 
-      // 2. Make the fetch call WITH the Authorization header
-      const response = await fetch(`http://localhost:8000/api/student/class`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // THIS IS THE CRITICAL LINE
-          'Authorization': `Bearer ${token}` 
-        },
-      });
-      
-      if (!response.ok) {
-        // This is where your 401 error is being caught
-        throw new Error(`Server responded with ${response.status}`);
+        // The backend returns the full class object, e.g., { _id: '...', name: '10th' }
+        const classData = await response.json();
+        
+        // Update the user state with the fetched class name
+        selectClass(classData.name + 'th'); 
+
+      } catch (error) {
+        console.error("Error fetching user class:", error);
       }
-      
-      const data = await response.json();
-      selectClass(data.name);
-      
-    } catch (error) {
-      console.error("Error fetching user class:", error);
     }
   }
-}
 
   useEffect(() => {
-    console.log(currentUser);
-    
     if (!currentUser) router.push('/login');
-    else if (currentUser.role === 'student' && !currentUser.class) fetchUserClass();
-    
+    else if (currentUser.role === 'student') fetchUserClass();
   }, [currentUser, router]);
   
   if (!currentUser || !currentUser.class) {

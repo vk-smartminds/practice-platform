@@ -34,6 +34,7 @@ export interface User {
   password?: string; // Password should not be stored in currentUser state long-term
   role: 'student' | 'admin';
   class?: string | null;
+  classId?: string | null;
 }
 
 export interface AppData {
