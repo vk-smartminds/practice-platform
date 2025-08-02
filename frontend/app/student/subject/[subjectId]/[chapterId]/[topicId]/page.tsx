@@ -1,4 +1,30 @@
-// app/(student)/subjects/[subjectKey]/[chapterKey]/[topicId]/page.tsx
+// FILE: app/student/subjects/[subjectId]/[chapterId]/[topicId]/page.tsx
+// import QuestionsDisplay from '../../../../../components/student/QuestionsDisplay'; // Import the client component
+
+// // This is a Server Component (no "use client")
+// // It can be async and can access params directly
+
+// interface Params {
+//   subjectId: string;
+//   chapterId: string;
+//   topicId: string;
+// }
+
+// export default async function QuestionsPage({ params }: { params: Params }) {
+//   // Destructure the params on the server
+//   const { subjectId, chapterId, topicId } = params;
+
+//   // Pass the values down as regular props to the client component
+//   return (
+//     <QuestionsDisplay
+//     // @ts-ignore
+//       subjectId={subjectId}
+//       chapterId={chapterId}
+//       topicId={topicId}
+//     />
+//   );
+// }
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -17,12 +43,18 @@ type Props = {
 // Define interfaces for the data we'll fetch
 interface Subject { _id: string; name: string; }
 interface Chapter { _id: string; chapterName: string; }
-interface Topic { _id: string; name: string; }
+interface Topic { _id: string; title: string; }
 interface PageData {
   subjectName: string;
   chapterName: string;
   topicName: string;
   questions: Question[];
+}
+
+interface QuestionsDisplayProps {
+  subjectId: string;
+  chapterId: string;
+  topicId: string;
 }
 
 export default function QuestionsPage({ params }: Props) {
@@ -38,7 +70,6 @@ export default function QuestionsPage({ params }: Props) {
       setError(null);
 
       try {
-        // This is now much simpler and more reliable. We fetch everything directly using IDs.
         const [subjectsRes, chaptersRes, topicsRes, questionsRes] = await Promise.all([
           fetch(`http://localhost:8000/api/student/subjects`, { credentials: "include" }),
           fetch(`http://localhost:8000/api/student/chapters/${subjectId}`, { credentials: "include" }),
@@ -50,13 +81,11 @@ export default function QuestionsPage({ params }: Props) {
           throw new Error("One or more API requests failed.");
         }
 
-        // Parse all responses
         const allSubjects: Subject[] = await subjectsRes.json();
         const allChapters: Chapter[] = await chaptersRes.json();
         const allTopics: Topic[] = await topicsRes.json();
         const questions: Question[] = await questionsRes.json();
 
-        // Find the specific items by ID for the breadcrumbs
         const subject = allSubjects.find(s => s._id === subjectId);
         const chapter = allChapters.find(c => c._id === chapterId);
         const topic = allTopics.find(t => t._id === topicId);
@@ -68,7 +97,7 @@ export default function QuestionsPage({ params }: Props) {
         setPageData({
           subjectName: subject.name,
           chapterName: chapter.chapterName,
-          topicName: topic.name,
+          topicName: topic.title,
           questions: questions,
         });
 
@@ -83,19 +112,10 @@ export default function QuestionsPage({ params }: Props) {
     fetchQuestionPageData();
   }, [subjectId, chapterId, topicId]);
 
-  if (loading) {
-    return <div className="text-center p-12">Loading questions...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center p-12 text-red-500">Error: {error}</div>;
-  }
-
-  if (!pageData) {
-    return <div className="text-center p-12">Could not load page data.</div>;
-  }
+  if (loading) return <div className="text-center p-12">Loading questions...</div>;
+  if (error) return <div className="text-center p-12 text-red-500">Error: {error}</div>;
+  if (!pageData) return <div className="text-center p-12">Could not load page data.</div>;
   
-  // Helper to create keys, only needed for linking backwards
   const createKeyFromName = (name: string): string => {
       if (typeof name !== 'string' || !name) return '';
       return name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -103,8 +123,8 @@ export default function QuestionsPage({ params }: Props) {
 
   const breadcrumbLinks = [
     { href: "/student/dashboard", label: "Dashboard" },
-    { href: `/student/subjects/${createKeyFromName(pageData.subjectName)}`, label: pageData.subjectName },
-    { href: `/student/subjects/${subjectId}/${chapterId}`, label: pageData.chapterName },
+    { href: `/student/subject/${subjectId}`, label: pageData.subjectName },
+    { href: `/student/subject/${subjectId}/${chapterId}`, label: pageData.chapterName },
     { label: pageData.topicName },
   ];
 
@@ -112,11 +132,10 @@ export default function QuestionsPage({ params }: Props) {
     <div>
       <Breadcrumbs links={breadcrumbLinks} />
       <h1 className="text-3xl font-bold mt-4 mb-6">{pageData.topicName} - Practice Questions</h1>
-      
       {pageData.questions.length > 0 ? (
         <div className="space-y-4">
           {pageData.questions.map((q, index) => (
-            <QuestionCard key={q.id} question={q} index={index} />
+            <QuestionCard key={q._id} question={q} index={index} />
           ))}
         </div>
       ) : (

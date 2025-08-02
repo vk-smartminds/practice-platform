@@ -4,7 +4,6 @@ const subjectSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true, // e.g., "Mathematics", "Physics"
   },
   classId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -12,6 +11,10 @@ const subjectSchema = new mongoose.Schema({
     required: true, // Ensure every subject is associated with a class
   }
 });
+
+// ADD this compound index
+// This ensures the combination of name and classId is unique
+subjectSchema.index({ name: 1, classId: 1 }, { unique: true });
 
 const Subject = mongoose.model('Subject', subjectSchema);
 export default Subject;

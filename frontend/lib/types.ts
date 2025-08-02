@@ -1,13 +1,14 @@
 // lib/types.ts
 export interface Question {
-  id: string;
-  question: string;
+  _id: string;
+  questionText: string;
   options: string[];
   correct: number;
-  explanation: string;
+  answerText: string;
   subject?: string;
   chapter?: string;
   topic?: string;
+  questionType: 'Short Answer' | 'Long Answer' | 'Problem-Solving' | 'Definition' | 'Fill-in-the-Blank'
 }
 
 export interface Topic {
