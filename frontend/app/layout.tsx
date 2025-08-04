@@ -8,7 +8,7 @@ import Header from './components/shared/Header';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'LearnSphere',
+  title: 'ShivArth  ',
   description: 'An interactive learning platform',
 };
 

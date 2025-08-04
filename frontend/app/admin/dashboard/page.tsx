@@ -1,59 +1,75 @@
-// app/(admin)/dashboard/page.tsx
-'use client';
+import React from "react";
+import { AdminLayout } from "../../components/admin/AdminLayout";
+import { cookies } from "next/headers"; // Import the cookies function
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
-import AdminQuestionForm from '../../components/admin/AdminQuestionForm';
-import AdminQuestionList from '../../components/admin/AdminQuestionList';
 
-type AdminTab = 'create' | 'manage';
+// This is a Server Component. It fetches initial data.
+const getClasses = async () => {
+  // 1. Get the authentication token from the cookies
+  const cookieStore = cookies();
+  // @ts-ignore
+  const tokenCookie = cookieStore.get("token"); // <-- IMPORTANT: Use the actual name of your auth cookie (e.g., 'jwt', 'accessToken')
 
-export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<AdminTab>('create');
-  const { currentUser } = useAuth();
-  const router = useRouter();
 
-  useEffect(() => {
-    // This is an authorization guard.
-    // It ensures that only logged-in admins can see this page.
-    if (!currentUser || currentUser.role !== 'admin') {
-      router.push('/login');
-    }
-  }, [currentUser, router]);
-
-  // Render nothing or a loading spinner while we wait for the auth check.
-  if (!currentUser) {
-    return null;
+  // 2. Prepare the headers
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  if (tokenCookie) {
+    // @ts-ignore
+    headers["Cookie"] = `token=${tokenCookie.value}`; // <-- Forward the cookie
   }
 
-  const tabClass = (tabName: AdminTab) =>
-    `px-6 py-3 font-semibold rounded-t-lg transition-colors duration-200 focus:outline-none ${
-      activeTab === tabName
-        ? 'bg-white text-indigo-600 border-b-2 border-indigo-600'
-        : 'bg-transparent text-gray-600 hover:bg-gray-200'
-    }`;
+
+  try {
+    // 3. Make the authenticated request
+    const res = await fetch("http://localhost:8000/api/admin/classes", {
+      headers,
+      cache: "no-store",
+    });
+
+
+    if (!res.ok) {
+      // Provide more specific error feedback
+      if (res.status === 401) {
+        throw new Error("Unauthorized: Please log in as an admin.");
+      }
+      throw new Error(`Failed to fetch classes. Status: ${res.status}`);
+    }
+    return res.json();
+  } catch (error: any) {
+    console.error("Error fetching classes:", error.message);
+    // Re-throw the error so we can display a specific message in the UI
+    throw error;
+  }
+};
+
+
+export default async function AdminDashboardPage() {
+  let classes = [];
+  let error = null;
+
+
+  try {
+    classes = await getClasses();
+  } catch (e: any) {
+    error = e.message;
+  }
+
 
   return (
-    <div>
-      <h1 className="text-4xl font-extrabold text-gray-900 mb-6">Admin Dashboard</h1>
-      
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-300 mb-6">
-        <nav className="-mb-px flex space-x-2" aria-label="Tabs">
-          <button onClick={() => setActiveTab('create')} className={tabClass('create')}>
-            Create Question
-          </button>
-          <button onClick={() => setActiveTab('manage')} className={tabClass('manage')}>
-            Manage Questions
-          </button>
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      <div>
-        {activeTab === 'create' ? <AdminQuestionForm /> : <AdminQuestionList />}
-      </div>
+    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8">
+      {error ? (
+        <div className="text-center text-red-600 bg-red-100 p-4 rounded-lg">
+          <p className="font-bold">Could not load admin data.</p>
+          <p>{error}</p>
+        </div>
+      ) : (
+        <AdminLayout classes={classes} />
+      )}
     </div>
   );
 }
+
+
+
