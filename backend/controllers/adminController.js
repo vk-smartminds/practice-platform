@@ -38,12 +38,12 @@ export const createTopic = asyncHandler(async (req, res) => {
 });
 
 export const createQuestion = asyncHandler(async (req, res) => {
-    const { questionText, answer, explanation, topicId } = req.body;
+    const { questionText, answerText, explanation, topicId } = req.body;
     if (!questionText || !answer || !topicId) {
         res.status(400);
         throw new Error("Please provide questionText, answer, and topicId");
     }
-    const question = await Question.create({ questionText, answer, explanation, topicId });
+    const question = await Question.create({ questionText, answerText, explanation, topicId });
     res.status(201).json(question);
 });
 
@@ -145,4 +145,45 @@ export const deleteQuestion = asyncHandler(async (req, res) => {
     }
     await question.deleteOne();
     res.status(200).json({ message: "Question deleted" });
+});
+
+// --- GET SINGLE ITEM routes for breadcrumbs ---
+
+const getResourceById = async (model, id, res) => {
+    const resource = await model.findById(id);
+    if (!resource) {
+        res.status(404);
+        throw new Error("Resource not found");
+    }
+    res.status(200).json(resource);
+};
+
+export const getClassById = asyncHandler(async (req, res) => getResourceById(Class, req.params.id, res));
+export const getSubjectById = asyncHandler(async (req, res) => getResourceById(Subject, req.params.id, res));
+export const getChapterById = asyncHandler(async (req, res) => getResourceById(Chapter, req.params.id, res));
+export const getTopicById = asyncHandler(async (req, res) => getResourceById(Topic, req.params.id, res));
+
+
+// --- Also, add a simple CREATE route for Classes ---
+export const createClass = asyncHandler(async (req, res) => {
+    const { name } = req.body;
+    if (!name) {
+        res.status(400);
+        throw new Error("Please provide a class name");
+    }
+    const newClass = await Class.create({ name });
+    res.status(201).json(newClass);
+});
+
+// --- And UPDATE/DELETE for Classes ---
+export const updateClass = asyncHandler(async (req, res) => updateResource(Class, req.params.id, req.body, res));
+export const deleteClass = asyncHandler(async (req, res) => {
+     const classToDelete = await Class.findById(req.params.id);
+    if (!classToDelete) {
+        res.status(404);
+        throw new Error("Class not found");
+    }
+    // Add cascading delete logic if necessary
+    await classToDelete.deleteOne();
+    res.status(200).json({ message: "Class deleted" });
 });

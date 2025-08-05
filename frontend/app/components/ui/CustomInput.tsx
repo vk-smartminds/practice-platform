@@ -8,9 +8,10 @@ interface CustomInputProps {
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
-  placeholder: string;
+  placeholder?: string;
   required?: boolean;
   as?: "textarea";
+  name?: string;
 }
 
 
@@ -22,12 +23,14 @@ export const CustomInput: React.FC<CustomInputProps> = ({
   placeholder,
   required = true,
   as,
+  name,
 }) => {
   const commonProps = {
     value,
     onChange,
     placeholder,
     required,
+    name,
     className:
       "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
   };
@@ -46,6 +49,3 @@ export const CustomInput: React.FC<CustomInputProps> = ({
     </div>
   );
 };
-
-
-

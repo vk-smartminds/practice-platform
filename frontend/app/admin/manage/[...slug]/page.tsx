@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { ClientPage } from '../../components/admin/ClientPage';
+import { ClientPage } from '../../../components/admin/ClientPage';
 
 const API_BASE_URL = 'http://localhost:8000/api/admin';
 
