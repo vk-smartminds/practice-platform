@@ -21,6 +21,24 @@ const studentSchema = new mongoose.Schema({
     ref: 'Class',
     required: true,
   },
+  // --- NEW FIELDS ---
+  school: {
+    type: String,
+    required: true,
+  },
+  address: {
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+  },
+  guardianName: {
+    type: String,
+    required: true,
+  },
+  guardianMobileNumber: {
+    type: String,
+    required: true,
+  },
 }, {
   timestamps: true,
 });

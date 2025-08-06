@@ -27,7 +27,7 @@ export default function SubjectCard({ subjectId, subjectName }: Props) {
     >
       <div className="flex items-center mb-3 gap-4">
         <span className="text-2xl">{getSubjectIcon(subjectName)}</span>
-        <h3 className="text-xl font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+        <h3 className="text-xl font-bold text-gray-800 group-hover:text-[#e95672] transition-colors">
           {subjectName}
         </h3>
       </div>

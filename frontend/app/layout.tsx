@@ -19,10 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-50 text-gray-800`}>
+      <body className={`${inter.className} bg-[] text-[#693b94]`}>
         <AuthProvider>
           <Header />
-          <main className="container mx-auto p-4 md:p-8">
+          <main className="mx-auto p-4 md:p-8 bg-white/50 rounded-lg shadow-sm my-8">
             {children}
           </main>
         </AuthProvider>

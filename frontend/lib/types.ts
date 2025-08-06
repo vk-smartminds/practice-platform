@@ -22,6 +22,7 @@ export interface Chapter {
 }
 
 export interface Subject {
+  id: string;
   name: string;
   class: string;
   icon: string;
@@ -30,6 +31,7 @@ export interface Subject {
 }
 
 export interface User {
+  id: string;
   name: string;
   email: string;
   password?: string; // Password should not be stored in currentUser state long-term

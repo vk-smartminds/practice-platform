@@ -7,7 +7,22 @@ import bcrypt from 'bcryptjs';
 // @route   POST /api/auth/register
 // @access  Public
 export const registerUser = async (req, res) => {
-  const { name, email, password, classId, subjectId } = req.body;
+  // Destructure all fields from the request body
+  const { 
+    name, 
+    email, 
+    password, 
+    classId, 
+    school, 
+    address, 
+    guardianName, 
+    guardianMobileNumber 
+  } = req.body;
+
+  // Basic validation for the address object
+  if (!address || !address.city || !address.state || !address.pincode) {
+    return res.status(400).json({ message: 'Please provide a complete address.' });
+  }
 
   try {
     const studentExists = await Student.findOne({ email });
@@ -15,17 +30,20 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'A student with this email already exists' });
     }
 
-    // Note: We don't hash the password here because the pre-save hook in the model handles it.
+    // Create a new student with all the provided details
     const student = await Student.create({
       name,
       email,
-      password, // Pass the plain password, the model will hash it
+      password, // The pre-save hook will hash this
       classId,
-      subjectId,
+      school,
+      address,
+      guardianName,
+      guardianMobileNumber,
     });
 
     if (student) {
-      // Generate token and set cookie after successful registration
+      // Generate a token and send back a success response
       generateToken(res, student._id, 'student');
       res.status(201).json({
         _id: student._id,
@@ -37,10 +55,10 @@ export const registerUser = async (req, res) => {
       res.status(400).json({ message: 'Invalid student data' });
     }
   } catch (error) {
+    console.error(error); // Log the error for debugging
     res.status(500).json({ message: 'Server error during registration', error: error.message });
   }
 };
-
 // @desc    Login user (student or admin) & get token
 // @route   POST /api/auth/login
 // @access  Public

@@ -74,7 +74,7 @@ export default async function ChaptersPage({ params }: Props) {
       <Breadcrumbs links={breadcrumbLinks} />
       <h1 className="text-3xl font-bold mt-2 mb-6 flex items-center">
         <span className="text-4xl mr-4">{getSubjectIcon(subject.name)}</span>
-        {subject.name} Chapters
+        Chapters
       </h1>
       {chapters.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

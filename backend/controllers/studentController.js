@@ -4,6 +4,17 @@ import Question from '../models/questionModel.js';
 import Subject from '../models/subjectModel.js';
 import Class from '../models/classModel.js';
 
+
+export const getAllClasses = async (req, res) => {
+  try {
+    // Find all classes, but only select the 'name' and '_id' fields
+    const classes = await Class.find({}).select('_id name');
+    res.json(classes);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error fetching classes' });
+  }
+};
+
 // export const getQuestionsForTopic = async (req, res) => {
 //     try {
 //         // 1. Extract all necessary IDs from the request

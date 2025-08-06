@@ -39,9 +39,9 @@ export const createTopic = asyncHandler(async (req, res) => {
 
 export const createQuestion = asyncHandler(async (req, res) => {
     const { questionText, answerText, explanation, topicId } = req.body;
-    if (!questionText || !answer || !topicId) {
+    if (!questionText || !answerText || !topicId) {
         res.status(400);
-        throw new Error("Please provide questionText, answer, and topicId");
+        throw new Error("Please provide questionText, answerText, and topicId");
     }
     const question = await Question.create({ questionText, answerText, explanation, topicId });
     res.status(201).json(question);

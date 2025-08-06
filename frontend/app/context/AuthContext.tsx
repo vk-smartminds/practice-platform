@@ -3,17 +3,30 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Question } from '@/lib/types';
-import { appData } from '@/lib/data';
+import { User, Question as OriginalQuestion } from '@/lib/types';
+
+type Question = OriginalQuestion & { id: string };
 
 interface AuthContextType {
   currentUser: User | null;
   adminQuestions: Question[];
   login: (username: string, pass: string) => Promise<boolean>;
+  register: (data: RegistrationData) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   selectClass: (selectedClass: string) => void;
   addAdminQuestion: (question: Question) => void;
   deleteAdminQuestion: (questionId: string) => void;
+}
+
+interface RegistrationData {
+  name: string;
+  email: string;
+  password: string;
+  classId: string;
+  school: string;
+  address: object;
+  guardianName: string;
+  guardianMobileNumber: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -79,12 +92,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const logout = () => {
-    // Clear both the user and the token on logout
-    sessionStorage.removeItem('currentUser');
-    sessionStorage.removeItem('authToken'); // Remove the token
-    setCurrentUser(null);
-    router.push('/login');
+  const register = async (data: RegistrationData): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        // The backend provides a message, so we return it
+        return { success: false, message: responseData.message || 'Registration failed.' };
+      }
+      
+      // On success, the backend sends back user data and a token in a cookie.
+      // We don't need to set the user here, as they will log in next.
+      return { success: true };
+
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      return { success: false, message: error.message || 'An unknown server error occurred.' };
+    }
+  };
+
+  const logout = async () => {
+  try {
+      // 1. Make an API call to the backend logout endpoint
+      await fetch('http://localhost:8000/api/auth/logout', {
+        method: 'POST', // Use POST for actions that change state
+        credentials: 'include', // Important to send the cookie
+      });
+    } catch (error) {
+      // Even if the API call fails (e.g., network error),
+      // we still want to clear the frontend state as a fallback.
+      console.error("Logout API call failed:", error);
+    } finally {
+      // 2. Clear local state and redirect, regardless of API call success
+      sessionStorage.removeItem('currentUser');
+      setCurrentUser(null);
+      router.push('/login');
+    }
   };
 
   const selectClass = (selectedClass: string) => {
@@ -112,7 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, logout, selectClass, adminQuestions, addAdminQuestion, deleteAdminQuestion }}>
+    <AuthContext.Provider value={{ currentUser, login, register, logout, selectClass, adminQuestions, addAdminQuestion, deleteAdminQuestion }}>
       {children}
     </AuthContext.Provider>
   );

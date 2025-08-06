@@ -15,7 +15,7 @@ const fetchData = async (url: string) => {
         return res.json();
     } catch (error) {
         console.error(error);
-        return null; 
+        return null;
     }
 };
 
