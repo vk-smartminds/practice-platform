@@ -4,6 +4,7 @@ import Topic from "../models/topicModel.js";
 import Question from "../models/questionModel.js";
 import Class from "../models/classModel.js";
 import asyncHandler from "express-async-handler";
+import Student from "../models/studentModel.js";
 
 // --- CREATE routes ---
 // (Your existing create functions: createSubject, createChapter, etc. remain here)
@@ -187,3 +188,83 @@ export const deleteClass = asyncHandler(async (req, res) => {
     await classToDelete.deleteOne();
     res.status(200).json({ message: "Class deleted" });
 });
+
+// @desc    Get all students
+// @route   GET /api/admin/students
+// @access  Private (Admin only)
+export const getAllStudents = async (req, res) => {
+  try {
+    // Fetch all students and populate their class name
+    const students = await Student.find({}).populate('classId', 'name');
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while fetching students.' });
+  }
+};
+
+// @desc    Get a single student by ID
+// @route   GET /api/admin/students/:id
+// @access  Private (Admin only)
+export const getStudentById = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id).populate('classId', 'name');
+    if (student) {
+      res.status(200).json(student);
+    } else {
+      res.status(404).json({ message: 'Student not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while fetching student data.' });
+  }
+};
+
+// @desc    Update a student's profile
+// @route   PUT /api/admin/students/:id
+// @access  Private (Admin only)
+export const updateStudent = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (student) {
+      // Update fields from the request body
+      student.name = req.body.name || student.name;
+      student.email = req.body.email || student.email;
+      student.school = req.body.school || student.school;
+      student.guardianName = req.body.guardianName || student.guardianName;
+      student.guardianMobileNumber = req.body.guardianMobileNumber || student.guardianMobileNumber;
+      
+      if (req.body.address) {
+        student.address = { ...student.address, ...req.body.address };
+      }
+      if (req.body.classId) {
+        student.classId = req.body.classId;
+      }
+      // Note: For security, password changes should have a separate, dedicated route.
+
+      const updatedStudent = await student.save();
+      res.status(200).json(updatedStudent);
+    } else {
+      res.status(404).json({ message: 'Student not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while updating student.' });
+  }
+};
+
+// @desc    Delete a student
+// @route   DELETE /api/admin/students/:id
+// @access  Private (Admin only)
+export const deleteStudent = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (student) {
+      await student.deleteOne(); // Mongoose 5+ uses deleteOne()
+      res.status(200).json({ message: 'Student removed successfully' });
+    } else {
+      res.status(404).json({ message: 'Student not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while deleting student.' });
+  }
+};

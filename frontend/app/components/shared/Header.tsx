@@ -84,9 +84,14 @@ export default function Header() {
                       <p className="text-sm text-[#2D3748]">Signed in as</p>
                       <p className="text-sm font-medium text-[#2D3748] truncate">{currentUser.email}</p>
                     </div>
-                    <Link href="/student/profile" className="block w-full text-left px-4 py-2 text-sm text-[#2D3748] hover:bg-gray-100">
-                      Profile
-                    </Link>
+                    
+                    {currentUser.role === 'student' && (
+                      <>
+                        <Link href="/student/profile" className="block w-full text-left px-4 py-2 text-sm text-[#2D3748] hover:bg-gray-100">
+                          Profile
+                        </Link>
+                      </>
+                    )}
                     <Link href="/settings" className="block w-full text-left px-4 py-2 text-sm text-[#2D3748] hover:bg-gray-100">
                       Settings
                     </Link>

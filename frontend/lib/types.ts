@@ -36,8 +36,16 @@ export interface User {
   email: string;
   password?: string; // Password should not be stored in currentUser state long-term
   role: 'student' | 'admin';
-  class?: string | null;
+  className?: string | null;
   classId?: string | null;
+  address?: {
+    city: string;
+    state: string;
+    pincode: string;
+  } | null;
+  school?: string | null;
+  guardianName?: string | null;
+  guardianMobileNumber?: string | null;
 }
 
 export interface AppData {

@@ -28,7 +28,12 @@ import {
     getChapterById,
     getTopicById,
     updateClass,
-    deleteClass
+    deleteClass,
+
+    getAllStudents,
+    getStudentById,
+    updateStudent,
+    deleteStudent,
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -83,5 +88,16 @@ router.route('/classes/:id').put(adminOnly, updateClass); // Add this
 router.route('/classes/:id').delete(adminOnly, deleteClass); // Add this
 // ... (rest of delete routes)
 
+
+
+// Route for getting all students and creating a new one (if you add that functionality)
+router.route('/students')
+  .get(adminOnly, getAllStudents);
+
+// Routes for a specific student by their ID
+router.route('/student/:id')
+  .get(adminOnly, getStudentById)
+  .put(adminOnly, updateStudent)
+  .delete(adminOnly, deleteStudent);
 
 export default router;

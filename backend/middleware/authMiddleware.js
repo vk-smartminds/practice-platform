@@ -1,11 +1,8 @@
+// backend/middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
 import Student from '../models/studentModel.js';
 import Admin from '../models/adminModel.js';
 
-/**
- * Middleware to protect routes by verifying the JWT from cookies.
- * It uses the 'role' stored in the token to look up the user in the correct collection (Students or Admins).
- */
 export const protect = async (req, res, next) => {
   let token;
 
@@ -16,13 +13,17 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    // Verify the token to get the payload { id, role }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     let user;
-    // Conditionally find the user based on the role in the token
     if (decoded.role === 'student') {
-      user = await Student.findById(decoded.id).select('-password');
+      // FIX: Added .populate() to fetch the related Class document
+      // The first argument is the path to populate ('classId').
+      // The second argument specifies which fields to include from the Class document ('name').
+      user = await Student.findById(decoded.id)
+        .populate('classId', 'name')
+        .select('-password');
+        
     } else if (decoded.role === 'admin') {
       user = await Admin.findById(decoded.id).select('-password');
     }
@@ -30,10 +31,16 @@ export const protect = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: 'Not authorized, user not found' });
     }
+    
+    // Now, req.user will contain the populated class details.
+    // To make it consistent with your frontend, we can create a virtual 'className' field.
+    const userObject = user.toObject();
+    if (userObject.classId && userObject.classId.name) {
+        userObject.className = userObject.classId.name;
+    }
 
-    // Attach the user object (with role) to the request for subsequent middleware/controllers
-    req.user = user;
-    req.user.role = decoded.role; // Ensure the role is explicitly set
+    req.user = userObject;
+    req.user.role = decoded.role;
 
     next();
   } catch (error) {
@@ -42,14 +49,9 @@ export const protect = async (req, res, next) => {
   }
 };
 
-/**
- * Middleware for Role-Based Access Control (RBAC).
- * This should be used *after* the 'protect' middleware.
- * @param {...string} roles - A list of roles allowed to access the route (e.g., 'admin', 'student').
- */
+// The 'authorize' middleware does not need any changes.
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    // req.user is attached by the 'protect' middleware
     if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({ 
         message: `Forbidden: User role '${req.user.role}' is not authorized for this resource` 

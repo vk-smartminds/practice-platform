@@ -110,6 +110,71 @@ export const logoutUser = (req, res) => {
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
+// @desc    Get user profile
+// @route   GET /api/auth/profile
+// @access  Private
+export const getStudentProfile = async (req, res) => {
+  // Your authentication middleware should have already found the user 
+  // and attached it to `req.user`.
+  
+  if (req.user) {
+    // The user object is already available, so just send it back.
+    // There's no need to query the database again.
+    res.status(200).json({
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      className: req.user.className, // Make sure your middleware populates this
+      school: req.user.school,
+      address: req.user.address,
+      guardianName: req.user.guardianName,
+      guardianMobileNumber: req.user.guardianMobileNumber,
+      // Add any other fields you need on the profile page
+    });
+  } else {
+    // This case handles if the middleware fails for some reason.
+    res.status(404).json({ message: 'User not found' });
+  }
+};
+
+// @desc    Update student profile
+// @route   PUT /api/auth/profile
+// @access  Private (Student only)
+export const updateStudentProfile = async (req, res) => {
+  // The user's ID is available from the 'protect' middleware via req.user._id
+  const student = await Student.findById(req.user._id);
+
+  if (student) {
+    // Update only the fields that are allowed to be changed
+    student.name = req.body.name || student.name;
+    student.school = req.body.school || student.school; // <<< FIX IS HERE
+    student.guardianName = req.body.guardianName || student.guardianName;
+    
+    // Safely update the nested address object
+    if (req.body.address) {
+        student.address.city = req.body.address.city || student.address.city;
+        student.address.state = req.body.address.state || student.address.state;
+        student.address.pincode = req.body.address.pincode || student.address.pincode;
+    }
+
+    const updatedStudent = await student.save();
+
+    // Send back the updated profile information
+    res.status(200).json({
+      _id: updatedStudent._id,
+      name: updatedStudent.name,
+      email: updatedStudent.email,
+      className: req.user.className, // className comes from the populated middleware
+      school: updatedStudent.school,
+      address: updatedStudent.address,
+      guardianName: updatedStudent.guardianName,
+      guardianMobileNumber: updatedStudent.guardianMobileNumber,
+    });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
+};
+
 // Helper function to generate JWT and set it in a cookie
 const generateToken = (res, userId, userRole) => {
   const token = jwt.sign({ id: userId, role: userRole }, process.env.JWT_SECRET, {
