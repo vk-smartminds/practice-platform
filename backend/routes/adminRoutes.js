@@ -34,6 +34,9 @@ import {
     getStudentById,
     updateStudent,
     deleteStudent,
+
+    getEnrollmentStats,
+    getStudentDetailsByPincode
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -99,5 +102,8 @@ router.route('/student/:id')
   .get(adminOnly, getStudentById)
   .put(adminOnly, updateStudent)
   .delete(adminOnly, deleteStudent);
+
+router.get('/students/stats',adminOnly, getEnrollmentStats);
+router.get('/students/stats/pincode', getStudentDetailsByPincode);
 
 export default router;

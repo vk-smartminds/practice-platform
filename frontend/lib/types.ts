@@ -51,3 +51,8 @@ export interface User {
 export interface AppData {
   subjects: Record<string, Subject>;
 }
+
+export interface Class {
+  _id: string;
+  name: string;
+}

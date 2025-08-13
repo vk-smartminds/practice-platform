@@ -218,7 +218,7 @@ export const getStudentById = async (req, res) => {
   }
 };
 
-// @desc    Update a student's profile
+// @desc    Update a student's profile by Admin
 // @route   PUT /api/admin/students/:id
 // @access  Private (Admin only)
 export const updateStudent = async (req, res) => {
@@ -226,23 +226,27 @@ export const updateStudent = async (req, res) => {
     const student = await Student.findById(req.params.id);
 
     if (student) {
-      // Update fields from the request body
+      // Only update fields that are allowed to be changed by an admin
       student.name = req.body.name || student.name;
-      student.email = req.body.email || student.email;
-      student.school = req.body.school || student.school;
       student.guardianName = req.body.guardianName || student.guardianName;
       student.guardianMobileNumber = req.body.guardianMobileNumber || student.guardianMobileNumber;
+      
+      // Only update class if a new classId is provided
+      if (req.body.classId) {
+        student.classId = req.body.classId;
+      }
       
       if (req.body.address) {
         student.address = { ...student.address, ...req.body.address };
       }
-      if (req.body.classId) {
-        student.classId = req.body.classId;
-      }
-      // Note: For security, password changes should have a separate, dedicated route.
-
+      
+      // Email and School are explicitly NOT updated
+      
       const updatedStudent = await student.save();
-      res.status(200).json(updatedStudent);
+      // Populate the class name for the response
+      const populatedStudent = await Student.findById(updatedStudent._id).populate('classId', 'name');
+
+      res.status(200).json(populatedStudent);
     } else {
       res.status(404).json({ message: 'Student not found' });
     }
@@ -267,4 +271,116 @@ export const deleteStudent = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Server error while deleting student.' });
   }
+};
+
+// @desc    Get student enrollment statistics by pincode
+// @route   GET /api/admin/students/stats?timeframe=week
+// @access  Private (Admin only)
+export const getEnrollmentStats = async (req, res) => {
+    const { timeframe } = req.query;
+    let startDate;
+    const now = new Date();
+
+    switch (timeframe) {
+        case 'week':
+            startDate = new Date(now.setDate(now.getDate() - 7));
+            break;
+        case 'month':
+            startDate = new Date(now.setMonth(now.getMonth() - 1));
+            break;
+        case '6months':
+            startDate = new Date(now.setMonth(now.getMonth() - 6));
+            break;
+        case 'year':
+            startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+            break;
+        default:
+            // If no timeframe or an invalid one is provided, default to all time
+            startDate = new Date(0); // The beginning of time (epoch)
+    }
+
+    try {
+        const stats = await Student.aggregate([
+            {
+                // Step 1: Filter students created within the selected timeframe
+                $match: {
+                    createdAt: { $gte: startDate }
+                }
+            },
+            {
+                // Step 2: Group the filtered students by their address.pincode
+                $group: {
+                    _id: '$address.pincode', // Group by pincode
+                    count: { $sum: 1 }      // Count the number of students in each group
+                }
+            },
+            {
+                // Step 3: Sort the results by count in descending order
+                $sort: {
+                    count: -1
+                }
+            },
+            {
+                // Step 4: Rename the '_id' field to 'pincode' for a cleaner output
+                $project: {
+                    _id: 0,
+                    pincode: '$_id',
+                    count: 1
+                }
+            }
+        ]);
+
+        res.status(200).json(stats);
+
+    } catch (error) {
+        console.error("Stats Error:", error);
+        res.status(500).json({ message: 'Server error while fetching enrollment stats.' });
+    }
+};
+
+// @desc    Get detailed student list by pincode and timeframe
+// @route   GET /api/admin/students/stats/pincode?pincode=110056&timeframe=month
+// @access  Private (Admin only)
+export const getStudentDetailsByPincode = async (req, res) => {
+    const { timeframe, pincode } = req.query;
+
+    if (!pincode) {
+        return res.status(400).json({ message: 'Pincode is required.' });
+    }
+
+    let startDate;
+    const now = new Date();
+
+    switch (timeframe) {
+        case 'week':
+            startDate = new Date(now.setDate(now.getDate() - 7));
+            break;
+        case 'month':
+            startDate = new Date(now.setMonth(now.getMonth() - 1));
+            break;
+        case '6months':
+            startDate = new Date(now.setMonth(now.getMonth() - 6));
+            break;
+        case 'year':
+            startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+            break;
+        default:
+            startDate = new Date(0); // Default to all time
+    }
+
+    try {
+        const students = await Student.find({
+            'address.pincode': pincode,
+            createdAt: { $gte: startDate }
+        }).select('name email school'); // Select only the required fields
+
+        res.status(200).json({
+            count: students.length,
+            students: students
+        });
+
+    } catch (error) {
+        console.error("Pincode Stats Error:", error);
+        res.status(500).json({ message: 'Server error while fetching student details by pincode.' });
+    }
 };
